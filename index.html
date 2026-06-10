@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Find Your Car</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="navbar flex flex-col">
+      <div class="content-wrapper nav-row justify-between align-center">
+        <a class="logo" href="index.html">Blinker</a>
+        <div class="links flex align-center justify-between">
+          <a class="link" href="index.html">Home</a>
+          <a class="link active" href="#search">Find your car</a>
+          <a class="btn-contact" href="#footer">Contact</a>
+        </div>
+
+        <button class="menu-button" id="menu-button" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+
+      <div class="content-wrapper hero-content flex-col align-center">
+        <h1>Browse our cars</h1>
+        <div class="input-wrap">
+          <input id="search-input" type="text" placeholder="Search by Make, Model or Keyword" />
+          <button id="search-button" class="search-wrapper" aria-label="Search">Search</button>
+        </div>
+      </div>
+      <div class="overlay"></div>
+    </header>
+
+    <div class="mobile-menu" id="mobile-menu" aria-hidden="true">
+      <button class="close-menu" id="close-menu" aria-label="Close menu"></button>
+      <nav class="mobile-menu-links" aria-label="Mobile navigation">
+        <a class="mobile-link" href="index.html">Home</a>
+        <a class="mobile-link" href="#search">Find your car</a>
+        <a class="mobile-link" href="#footer">Contact</a>
+      </nav>
+    </div>
+
+    <main>
+      <section id="search">
+        <section id="filter" class="content-wrapper justify-between align-center">
+          <h1 class="search-info"><span class="black-txt">Search results:</span></h1>
+
+          <label class="sort-filter flex flex-col" for="sort-select">
+            <h2><span class="black-txt">Sort by:</span></h2>
+            <select id="sort-select">
+              <option value="az">Alphabetical A to Z</option>
+              <option value="za">Alphabetical Z to A</option>
+              <option value="newest">Newest to oldest</option>
+              <option value="oldest">Oldest to newest</option>
+            </select>
+          </label>
+        </section>
+
+        <p class="status content-wrapper" id="status" role="status">Loading cars...</p>
+
+        <section id="cars">
+          <div class="content-wrapper" id="anime-grid" aria-live="polite"></div>
+        </section>
+      </section>
+    </main>
+
+    <footer id="footer" class="site-footer">
+      <div class="content-wrapper justify-between align-center">
+        <p>Created for the Take-Home Interview Project.</p>
+        <p>Anime data provided by the Jikan API.</p>
+      </div>
+    </footer>
+
+    <script src="index.js"></script>
+  </body>
+</html>
