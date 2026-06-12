@@ -7,38 +7,75 @@ const menuButton = document.querySelector("#menu-button");
 const closeMenuButton = document.querySelector("#close-menu");
 const mobileMenu = document.querySelector("#mobile-menu");
 
-
 let animeList = [];
 let searchTerm = "";
+let searchTimer;
+let latestRequestId = 0;
 
 async function loadAnime() {
+  await fetchAnimeResults("https://api.jikan.moe/v4/top/anime?limit=12", {
+    loadingText: "Loading cars...",
+    errorText: "Live API data could not load, so sample anime data is showing instead.",
+  });
+}
+
+async function searchAnime() {
+  searchTerm = searchInput.value.trim();
+
+  if (!searchTerm) {
+    await loadAnime();
+    return;
+  }
+
+  const searchUrl = `https://api.jikan.moe/v4/anime?q=${encodeURIComponent(searchTerm)}&limit=18&sfw=true`;
+  await fetchAnimeResults(searchUrl, {
+    loadingText: `Searching for "${searchTerm}"...`,
+    errorText: "Search results could not load, so sample anime data is showing instead.",
+  });
+}
+
+async function fetchAnimeResults(url, messages) {
+  const requestId = ++latestRequestId;
+  statusMessage.textContent = messages.loadingText;
+
   try {
-    const response = await fetch("https://api.jikan.moe/v4/top/anime?limit=12");
+    const response = await fetch(url);
 
     if (!response.ok) {
       throw new Error("Anime API request failed");
     }
 
     const result = await response.json();
-    animeList = result.data.map((anime) => ({
-      id: anime.mal_id,
-      title: anime.title_english || anime.title,
-      year: anime.year || getYearFromDate(anime.aired?.from),
-      image: anime.images?.jpg?.large_image_url || anime.images?.jpg?.image_url,
-      score: anime.score,
-      episodes: anime.episodes,
-      type: anime.type,
-      url: anime.url,
-    }));
 
-    statusMessage.textContent = "";
+    if (requestId !== latestRequestId) {
+      return;
+    }
+
+    animeList = result.data.map(mapAnimeResult);
+    statusMessage.textContent = animeList.length ? "" : "No anime results found.";
     renderAnime();
   } catch (error) {
+    if (requestId !== latestRequestId) {
+      return;
+    }
+
     animeList = getFallbackAnime();
-    statusMessage.textContent =
-      "Live API data could not load, so sample anime data is showing instead.";
+    statusMessage.textContent = messages.errorText;
     renderAnime();
   }
+}
+
+function mapAnimeResult(anime) {
+  return {
+    id: anime.mal_id,
+    title: anime.title_english || anime.title,
+    year: anime.year || getYearFromDate(anime.aired?.from),
+    image: anime.images?.jpg?.large_image_url || anime.images?.jpg?.image_url,
+    score: anime.score,
+    episodes: anime.episodes,
+    type: anime.type,
+    url: anime.url,
+  };
 }
 
 function getYearFromDate(dateValue) {
@@ -50,27 +87,25 @@ function getYearFromDate(dateValue) {
 }
 
 function getVisibleAnime() {
-  const filteredAnime = animeList.filter((anime) =>
-    anime.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const sortedAnime = [...animeList];
 
   if (sortSelect.value === "az") {
-    filteredAnime.sort((a, b) => a.title.localeCompare(b.title));
+    sortedAnime.sort((a, b) => a.title.localeCompare(b.title));
   }
 
   if (sortSelect.value === "za") {
-    filteredAnime.sort((a, b) => b.title.localeCompare(a.title));
+    sortedAnime.sort((a, b) => b.title.localeCompare(a.title));
   }
 
   if (sortSelect.value === "newest") {
-    filteredAnime.sort((a, b) => b.year - a.year);
+    sortedAnime.sort((a, b) => b.year - a.year);
   }
 
   if (sortSelect.value === "oldest") {
-    filteredAnime.sort((a, b) => a.year - b.year);
+    sortedAnime.sort((a, b) => a.year - b.year);
   }
 
-  return filteredAnime;
+  return sortedAnime;
 }
 
 function renderAnime() {
@@ -116,16 +151,16 @@ function renderAnime() {
     .join("");
 }
 
-function setSearch() {
-  searchTerm = searchInput.value.trim();
-  renderAnime();
+function queueSearch() {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(searchAnime, 500);
 }
 
 function resetSearch() {
   searchInput.value = "";
   searchTerm = "";
   sortSelect.value = "az";
-  renderAnime();
+  loadAnime();
 }
 
 function openMenu() {
@@ -197,10 +232,12 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
-searchButton.addEventListener("click", setSearch);
+searchButton.addEventListener("click", searchAnime);
+searchInput.addEventListener("input", queueSearch);
 searchInput.addEventListener("keydown", (event) => {
   if (event.key === "Enter") {
-    setSearch();
+    clearTimeout(searchTimer);
+    searchAnime();
   }
 });
 
